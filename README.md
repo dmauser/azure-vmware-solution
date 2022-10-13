@@ -6,6 +6,6 @@ Articles and labs... (under construction)
 
 Deployment script: 
 ```bash
-wget -O svh-avs-er-deploy.sh https://raw.githubusercontent.com/dmauser/azure-virtualwan/main/secured-vhub/svh-avs-er-deploy.azcli
+wget -O svh-avs-er-deploy.sh https://raw.githubusercontent.com/dmauser/azure-vmware-solution/main/svh-er-transit/svh-avs-er-deploy.azcli
 chmod +xr svh-avs-er-deploy.sh
 ./svh-avs-er-deploy.sh

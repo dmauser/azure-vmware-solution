@@ -8,8 +8,8 @@ az extension update --name azure-firewall
 
 #Parameters
 region=eastus
-rg=lab-vwan-svh
-vwanname=vwan-svh
+rg=lab-svh-avs
+vwanname=svh-avs
 hubname=svhub
 username=azureuser
 password="Msft123Msft123" #Please change your password
