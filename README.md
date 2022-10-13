@@ -1,6 +1,6 @@
 # Azure VMware Solution
 
-Articles and labs... (under construction)
+Articles and labs
 
 ### AVS (ER) to On-prem (ER) transit using Secured-vhub+Routing Intent
 
