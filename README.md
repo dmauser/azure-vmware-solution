@@ -2,7 +2,7 @@
 
 Articles and labs
 
-### LAB: AVS (ER) to On-prem (ER) transit using Secured-vhub+Routing Intent
+### LAB: AVS (ER) to On-prem (ER) transit using Secured-vHub+Routing Intent
 
 Lab deployment script:
 
@@ -45,5 +45,5 @@ firewallsku=Premium #Azure Firewall SKU Standard or Premium
 
 #### Field notes
 
-- Review carefully all the considerations when enabling Routing Policies/Intent by reviewing [Virtual WAN Hub routing intent and routing policies - Troubleshooting data path](https://learn.microsoft.com/en-us/azure/virtual-wan/how-to-routing-policies#troubleshooting). Especially RFC 1918 prefixes (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) which are advertised by default from Secured-vHUB. In case the On-premises ExpressRoute circuit already advertises those prefixes, routing adjustments must be made before enabling Routing-Intent.
+- Review carefully all the considerations when enabling routing policies/intent by reviewing [Virtual WAN Hub routing intent and routing policies - Troubleshooting data path](https://learn.microsoft.com/en-us/azure/virtual-wan/how-to-routing-policies#troubleshooting). Especially RFC 1918 prefixes (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) which are advertised by default from Secured-vHUB. If the On-premises ExpressRoute circuit already advertises those prefixes, routing adjustments must be made before enabling Routing-Intent.
 - Always onboard ExpressRoute circuits (including On-premises) after converting Secured-vHub and enabling Routing Policies/Intent. Otherwise, converting after it will have the default route (0.0.0.0/0) advertised to all connections. That will give you granular control on securing Internet traffic (the default route 0/0 advertisement).
