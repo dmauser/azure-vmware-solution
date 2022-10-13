@@ -25,12 +25,13 @@ echo Creating vWAN hub..
 az network vwan create -g $rg -n $vwanname --branch-to-branch-traffic true --location $region --type Standard --output none
 az network vhub create -g $rg --name $hubname --address-prefix 192.168.1.0/24 --vwan $vwanname --location $region --sku Standard --no-wait
 
-# region
+echo Creating Spoke VNETs
+# Spoke VNETs
 az network vnet create --address-prefixes 172.16.1.0/24 -n spoke1 -g $rg -l $region --subnet-name main --subnet-prefixes 172.16.1.0/27 --output none
 az network vnet create --address-prefixes 172.16.2.0/24 -n spoke2 -g $rg -l $region --subnet-name main --subnet-prefixes 172.16.2.0/27 --output none
 az network vnet create --address-prefixes 172.16.3.0/24 -n spoke3 -g $rg -l $region --subnet-name main --subnet-prefixes 172.16.3.0/27 --output none
 
-echo Associating NSG on Spokes and Branch VNETs
+echo Creating NSG and associating to Spoke VNETs
 #Updating NSGs:
 az network nsg create --resource-group $rg --name default-nsg-$region --location $region -o none
 # Adding my home public IP to NSG for SSH access
