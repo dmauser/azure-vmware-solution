@@ -79,7 +79,7 @@ do
 done
 
 echo Creating vHub ExpressRoute Gateway...
-az network express-route gateway create -g $rg -n $hubname-ergw --location $region --min-val 1 --virtual-hub $hubname
+az network express-route gateway create -g $rg -n $hubname-ergw --location $region --min-val 1 --virtual-hub $hubname --output none
 prState=''
 while [[ $prState != 'Succeeded' ]];
 do
