@@ -1,6 +1,6 @@
 # Azure VMware Solution
 
-Articles and labs
+**Articles and labs**
 
 ### LAB: AVS (ER) to On-prem (ER) transit using Secured-vHub+Routing Intent
 
@@ -11,6 +11,8 @@ wget -O svh-avs-er-deploy.sh https://raw.githubusercontent.com/dmauser/azure-vmw
 chmod +xr svh-avs-er-deploy.sh
 ./svh-avs-er-deploy.sh
 ```
+
+Please, run the script above via [Azure Cloud Shell (Bash)](https://shell.azure.com/) or Azure CLI via Linux (Ubuntu).
 
 Default variables:
 
