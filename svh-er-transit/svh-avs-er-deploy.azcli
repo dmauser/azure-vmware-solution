@@ -21,7 +21,7 @@ mypip=$(curl -4 ifconfig.io -s)
 
 # Creating rg
 az group create -n $rg -l $region --output none
-echo Creating vwan hubs..
+echo Creating vWAN hub..
 az network vwan create -g $rg -n $vwanname --branch-to-branch-traffic true --location $region --type Standard --output none
 az network vhub create -g $rg --name $hubname --address-prefix 192.168.1.0/24 --vwan $vwanname --location $region --sku Standard --no-wait
 
@@ -31,7 +31,6 @@ az network vnet create --address-prefixes 172.16.2.0/24 -n spoke2 -g $rg -l $reg
 az network vnet create --address-prefixes 172.16.3.0/24 -n spoke3 -g $rg -l $region --subnet-name main --subnet-prefixes 172.16.3.0/27 --output none
 
 echo Associating NSG on Spokes and Branch VNETs
-
 #Updating NSGs:
 az network nsg create --resource-group $rg --name default-nsg-$region --location $region -o none
 # Adding my home public IP to NSG for SSH access
@@ -62,8 +61,31 @@ do
     sleep 5
 done
 
+#Enabling boot diagnostics for all VMs in the resource group (Serial console)
+az vm boot-diagnostics enable --ids $(az vm list -g $rg --query [].id -o tsv) -o none
+
+### Installing tools for networking connectivity validation such as traceroute, tcptraceroute, iperf and others (check link below for more details) 
+nettoolsuri="https://raw.githubusercontent.com/dmauser/azure-vm-net-tools/main/script/nettools.sh"
+for vm in `az vm list -g $rg --query "[?storageProfile.imageReference.offer=='UbuntuServer'].name" -o tsv`
+do
+ az vm extension set \
+ --resource-group $rg \
+ --vm-name $vm \
+ --name customScript \
+ --publisher Microsoft.Azure.Extensions \
+ --protected-settings "{\"fileUris\": [\"$nettoolsuri\"],\"commandToExecute\": \"./nettools.sh\"}" \
+ --no-wait
+done
+
 echo Creating vHub ExpressRoute Gateway...
-az network express-route gateway create -g $rg -n $hubname-ergw --location $region1 --min-val 1 --virtual-hub $hubname
+az network express-route gateway create -g $rg -n $hubname-ergw --location $region --min-val 1 --virtual-hub $hubname
+prState=''
+while [[ $prState != 'Succeeded' ]];
+do
+    prState=$(az network express-route gateway show -g $rg -n $hubname-ergw --query provisioningState -o tsv)
+    echo ExpressRoute Gateway $hubname-ergw "provisioningState="$prState
+    sleep 5
+done
 
 echo Configuring spoke1 and spoke3 vnet connection to their respective vHubs...
 
@@ -170,22 +192,6 @@ do
     prState=$(az rest --method get --uri /subscriptions/$subid/resourceGroups/$rg/providers/Microsoft.Network/virtualHubs/$hubname/routingIntent/$hubname_RoutingIntent?api-version=2022-01-01 --query 'value[].properties.provisioningState' -o tsv)
     echo "$hubname routing intent provisioningState="$prState
     sleep 5
-done
-
-#Enabling boot diagnostics for all VMs in the resource group (Serial console)
-az vm boot-diagnostics enable --storage $stguri1 --ids $(az vm list -g $rg --query [].id -o tsv) -o none
-
-### Installing tools for networking connectivity validation such as traceroute, tcptraceroute, iperf and others (check link below for more details) 
-nettoolsuri="https://raw.githubusercontent.com/dmauser/azure-vm-net-tools/main/script/nettools.sh"
-for vm in `az vm list -g $rg --query "[?storageProfile.imageReference.offer=='UbuntuServer'].name" -o tsv`
-do
- az vm extension set \
- --resource-group $rg \
- --vm-name $vm \
- --name customScript \
- --publisher Microsoft.Azure.Extensions \
- --protected-settings "{\"fileUris\": [\"$nettoolsuri\"],\"commandToExecute\": \"./nettools.sh\"}" \
- --no-wait
 done
 
 echo Deployment has finished
