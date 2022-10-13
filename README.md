@@ -12,7 +12,7 @@ chmod +xr svh-avs-er-deploy.sh
 ./svh-avs-er-deploy.sh
 ```
 
-Please, run the script above via [Azure Cloud Shell (Bash)](https://shell.azure.com/) or Azure CLI via Linux (Ubuntu).
+Please, run the script above via [Azure Cloud Shell (Bash)](https://shell.azure.com/) or Azure CLI on Linux.
 
 Default variables:
 
@@ -48,4 +48,4 @@ firewallsku=Premium #Azure Firewall SKU Standard or Premium
 #### Field notes
 
 - Review carefully all the considerations when enabling routing policies/intent by reviewing [Virtual WAN Hub routing intent and routing policies - Troubleshooting data path](https://learn.microsoft.com/en-us/azure/virtual-wan/how-to-routing-policies#troubleshooting). Especially RFC 1918 prefixes (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) which are advertised by default from Secured-vHUB. If the On-premises ExpressRoute circuit already advertises those prefixes, routing adjustments must be made before enabling Routing-Intent.
-- Always onboard ExpressRoute circuits (including On-premises) after converting Secured-vHub and enabling Routing Policies/Intent. Otherwise, converting after it will have the default route (0.0.0.0/0) advertised to all connections. That will give you granular control on securing Internet traffic (the default route 0/0 advertisement).
+- Always onboard ExpressRoute circuits (including On-premises) after converting Secured-vHub plus Routing Policies/Intent. Otherwise, converting after it will have the default route (0.0.0.0/0) advertised to all connections. That will give you granular control on securing Internet traffic (the default route 0/0 advertisement).
