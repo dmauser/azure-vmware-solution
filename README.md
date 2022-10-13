@@ -2,7 +2,7 @@
 
 Articles and labs... (under construction)
 
-### Deploy ER-to-ER via Secured-vHUB:
+### AVS (ER) to On-prem (ER) transit using Secured-vhub+Routing Intent
 
 Deployment script: 
 ```bash
