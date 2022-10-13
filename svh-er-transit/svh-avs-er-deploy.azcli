@@ -178,7 +178,7 @@ az monitor diagnostic-settings create -n 'toLogAnalytics' \
 --output none
 
 #Enabling Secured-vHUB + Routing intenet
-echo "Enabling Secured-vHUB + Routing intent (Private Traffic Only)"
+echo "Enabling Secured-vHUB + Routing intent (Internet and Private Traffic)"
 nexthophub1=$(az network vhub show -g $rg -n $hubname --query azureFirewall.id -o tsv)
 az deployment group create --name $hubname-ri \
 --resource-group $rg \
