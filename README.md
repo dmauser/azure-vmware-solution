@@ -13,6 +13,12 @@ chmod +xr svh-avs-er-deploy.sh
 
 #### Network diagram: (TBD)
 
+#### Use cases
+
+- ExpressRoute Local SKU.
+- Lack of Global Reach feature.
+- Traffic inspection between AVS and On-premises is required.
+
 #### Considerations
 
 - ExpressRoute Circuits are not created as part of this lab.
