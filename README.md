@@ -4,12 +4,28 @@ Articles and labs
 
 ### LAB: AVS (ER) to On-prem (ER) transit using Secured-vhub+Routing Intent
 
-Lab deployment script: 
+Lab deployment script:
+
 ```bash
 wget -O svh-avs-er-deploy.sh https://raw.githubusercontent.com/dmauser/azure-vmware-solution/main/svh-er-transit/svh-avs-er-deploy.azcli
 chmod +xr svh-avs-er-deploy.sh
 ./svh-avs-er-deploy.sh
 ```
+
+Default variables:
+
+```Bash
+#Parameters
+region=eastus
+rg=lab-svh-avs # set your Resource Group
+vwanname=svh-avs # vWAN name
+hubname=svhub # vHub name
+username=azureuser # Username
+password="Msft123Msft123" # Please change your password
+vmsize=Standard_B1s # VM Size
+firewallsku=Premium #Azure Firewall SKU Standard or Premium
+```
+
 
 #### Network diagram
 

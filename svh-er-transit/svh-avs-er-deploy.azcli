@@ -8,12 +8,12 @@ az extension update --name azure-firewall
 
 #Parameters
 region=eastus
-rg=lab-svh-avs
-vwanname=svh-avs
-hubname=svhub
-username=azureuser
-password="Msft123Msft123" #Please change your password
-vmsize=Standard_B1s #VM Size
+rg=lab-svh-avs # set your Resource Group
+vwanname=svh-avs # vWAN name
+hubname=svhub # vHub name
+username=azureuser # Username
+password="Msft123Msft123" # Please change your password
+vmsize=Standard_B1s # VM Size
 firewallsku=Premium #Azure Firewall SKU Standard or Premium
 
 #Variables
