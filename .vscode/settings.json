@@ -1,0 +1,9 @@
+{
+    "grammarly.selectors": [
+        {
+            "language": "azcli",
+            "scheme": "file",
+            "pattern": "svh-er-transit/svh-avs-er-deploy.azcli"
+        }
+    ]
+}

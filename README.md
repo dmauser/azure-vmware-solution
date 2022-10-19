@@ -42,6 +42,7 @@ firewallsku=Premium #Azure Firewall SKU Standard or Premium
 #### Considerations
 
 - ExpressRoute Circuits are not created as part of this lab.
+- Routing intent is enabled only for Private Traffic. Currently, Private and Internet traffic is not supported for most of the regions. More details see purple box note under Background session of [How to configure Virtual WAN Hub routing intent and routing policies](https://learn.microsoft.com/en-us/azure/virtual-wan/how-to-routing-policies).
 - After connecting the AVS ExpressRoute Circuit, go to Firewall Manager - Security Configuration and enable secure Internet Traffic to allow the default route (0.0.0.0/0) to be advertised to the AVS environment.
 - Add AVS /22 prefix inside the Private traffic prefixes.
 
