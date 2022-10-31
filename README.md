@@ -57,7 +57,7 @@ firewallsku=Premium #Azure Firewall SKU Standard or Premium
 Lab deployment script:
 
 ```bash
-wget -O svh-avs-vpn-er https://raw.githubusercontent.com/dmauser/azure-vmware-solution/main/svh-vpn-er/svh-avs-vpn-er.azcli
+wget -O svh-avs-vpn-er.sh https://raw.githubusercontent.com/dmauser/azure-vmware-solution/main/svh-vpn-er/svh-avs-vpn-er.azcli
 chmod +xr svh-avs-vpn-er.sh
 ./svh-avs-vpn-er.sh
 ```
