@@ -80,6 +80,7 @@ done
 echo Creating vHub VPN Gateway...
 az network vpn-gateway create -n $hubname-vpngw -g $rg --location $region --vhub $hubname --no-wait 
 
+echo Enabling boot diagnostics and installing VM tools...
 #Enabling boot diagnostics for all VMs in the resource group (Serial console)
 az vm boot-diagnostics enable --ids $(az vm list -g $rg --query [].id -o tsv) -o none
 
