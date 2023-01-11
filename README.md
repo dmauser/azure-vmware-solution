@@ -2,6 +2,9 @@
 
 **Articles and labs**
 
+- [LAB: AVS (ER) to On-prem (ER) transit using Secured-vHub+Routing Intent](#lab-avs-er-to-on-prem-er-transit-using-secured-vhubrouting-intent)
+- [LAB: AVS (ER) to On-prem (VPN) transit using Secured-vHub+Routing Intent](#lab-avs-er-to-on-prem-vpn-transit-using-secured-vhubrouting-intent)
+
 ### LAB: AVS (ER) to On-prem (ER) transit using Secured-vHub+Routing Intent
 
 Lab deployment script:
