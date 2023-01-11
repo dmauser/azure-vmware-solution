@@ -2,10 +2,10 @@
 
 **Articles and labs**
 
-- [LAB: AVS (ER) to On-prem (ER) transit using Secured-vHub+Routing Intent](#lab-avs-er-to-on-prem-er-transit-using-secured-vhubrouting-intent)
-- [LAB: AVS (ER) to On-prem (VPN) transit using Secured-vHub+Routing Intent](#lab-avs-er-to-on-prem-vpn-transit-using-secured-vhubrouting-intent)
+- [LAB1: AVS (ER) to On-prem (ER) transit using Secured-vHub+Routing Intent](#lab1-avs-er-to-on-prem-er-transit-using-secured-vhubrouting-intent)
+- [LAB2: AVS (ER) to On-prem (VPN) transit using Secured-vHub+Routing Intent](#lab2-avs-er-to-on-prem-vpn-transit-using-secured-vhubrouting-intent)
 
-### LAB: AVS (ER) to On-prem (ER) transit using Secured-vHub+Routing Intent
+### LAB1: AVS (ER) to On-prem (ER) transit using Secured-vHub+Routing Intent
 
 Lab deployment script:
 
@@ -55,7 +55,7 @@ firewallsku=Premium #Azure Firewall SKU Standard or Premium
 - Always onboard ExpressRoute circuits (including On-premises) after converting Secured-vHub plus Routing Policies/Intent. Otherwise, converting after it will have the default route (0.0.0.0/0) advertised to all connections. That will give you granular control on securing Internet traffic (the default route 0/0 advertisement).
 
 
-### LAB: AVS (ER) to On-prem (VPN) transit using Secured-vHub+Routing Intent
+### LAB2: AVS (ER) to On-prem (VPN) transit using Secured-vHub+Routing Intent
 
 Lab deployment script:
 

@@ -190,4 +190,6 @@ az monitor diagnostic-settings create -n 'toLogAnalytics' \
 --metrics '[{"category": "AllMetrics","enabled": true}]' \
 --output none
 
-
+echo Deployment has finished
+echo Start ExpressRoute provisioning with your Service Provider and onboard AVS ER Circuit.
+echo Enable Routing Intent via https://aka.ms/inter-hub or script svh-avs-er-enable-ri.azcli
