@@ -1,0 +1,22 @@
+# Parameters (make changes based on your requirements)
+region=eastus
+rg=lab-svh-avs # set your Resource Group
+vwanname=svh-avs # vWAN name
+hubname=svhub # vHub name
+subid=$(az account list --query "[?isDefault == \`true\`].id" --all -o tsv)
+
+# ****** CAUTION ***** 
+# This command will remove routing intent from both Hubs
+#Hub1
+az rest --method delete --uri https://management.azure.com/subscriptions/$subid/resourceGroups/$rg/providers/Microsoft.Network/virtualHubs/$hubname/routingIntent/"$hubname"_RoutingIntent?api-version=2022-01-01
+
+# Check status
+prState1='Deleting'
+while [[ $prState1 == 'Deleting' ]];
+do
+    prState1=$(az rest --method get --uri /subscriptions/$subid/resourceGroups/$rg/providers/Microsoft.Network/virtualHubs/$hubname/routingIntent/$hubname_RoutingIntent?api-version=2022-01-01 --query 'value[].properties.provisioningState' -o tsv)
+    echo "$hubname routing intent provisioningState="$prState1
+    sleep 15
+done
+echo "$hubname routing intent disabled"
+
