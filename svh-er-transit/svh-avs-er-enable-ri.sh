@@ -3,20 +3,17 @@ region=eastus
 rg=lab-svh-avs # set your Resource Group
 vwanname=svh-avs # vWAN name
 hubname=svhub # vHub name
-riconfig=internetonly #Routing Intenet configuration, valid parametersare: privateonly, internetonly or both.
+riconfig=PrivateOnly #Routing Intenet configuration, valid parametersare: privateonly, internetonly or both.
 
-if [ riconfig = both ]; then
+if [ "$riconfig" = "both" ]; then
  config=Private-and-Internet
- goto routeintent
-elif [ riconfig = privateonly ]; then
- config=PrivateOnly
- goto outeintent
-elif [ riconfig= internetonly ]; then
+elif [ "$riconfig" = "internetonly" ]; then
  config=InternetOnly
- goto routeintent
+elif [ "$riconfig" = "privateonly" ]; then
+ config=PrivateOnly
 fi
 
-routeintent
+echo $config
 #Enabling Secured-vHUB + Routing intent
 echo "Enabling Secured-vHUB + Routing Intent" $config
 nexthophub1=$(az network vhub show -g $rg -n $hubname --query azureFirewall.id -o tsv)
@@ -26,6 +23,7 @@ az deployment group create --name $hubname-ri \
 --parameters scenarioOption=$config hubname=$hubname nexthop=$nexthophub1 \
 --no-wait
 
+sleep 10
 subid=$(az account list --query "[?isDefault == \`true\`].id" --all -o tsv)
 prState=''
 while [[ $prState != 'Succeeded' ]];
