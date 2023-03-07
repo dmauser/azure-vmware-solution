@@ -1,0 +1,121 @@
+
+
+# create rg
+az group create -n $rg -l $region --output none
+
+# VNETS
+az network vnet create --address-prefixes 10.40.160.0/24 -n spoke1 -g $rg -l $region --subnet-name main --subnet-prefixes 10.40.160.0/27 --output none
+az network vnet create --address-prefixes 10.40.161.0/24 -n spoke2 -g $rg -l $region --subnet-name main --subnet-prefixes 10.40.161.0/27 --output none
+
+echo Creating Spoke VMs...
+# Creating a VM in each connected spoke
+az vm create -n spoke1VM  -g $rg --image ubuntults --size $vmsize -l $region --subnet main --vnet-name spoke1 --admin-username $username --admin-password $password --nsg "" --no-wait
+az vm create -n spoke2VM  -g $rg --image ubuntults --size $vmsize -l $region --subnet main --vnet-name spoke2 --admin-username $username --admin-password $password --nsg "" --no-wait
+
+echo Associating NSG on Spokes and Branch VNETs
+#Updating NSGs:
+az network nsg create --resource-group $rg --name default-nsg-$region --location $region -o none
+az network vnet subnet update --id $(az network vnet list -g $rg --query '[?contains(location,`'$region'`)].{id:subnets[0].id}' -o tsv) --network-security-group default-nsg-$region -o none
+
+#Create ExpressRoute Gateway
+echo Creating Spoke1 ExpressRoute Gateway
+az network vnet subnet create --address-prefix 10.40.160.32/27 --name GatewaySubnet -g $rg --vnet-name spoke1 --output none
+az network public-ip create --name spoke1-ergw-pip --resource-group $rg --location $region -o none
+az network vnet-gateway create --name spoke1-ergw --resource-group $rg --location $region --public-ip-address spoke1-ergw-pip --vnet spoke1 --gateway-type "ExpressRoute" --sku "Standard" --no-wait
+
+echo Creating spoke2 ExpressRoute Gateway
+az network vnet subnet create --address-prefix 10.40.161.32/27  --name GatewaySubnet -g $rg --vnet-name spoke2 --output none
+az network public-ip create --name spoke2-ergw-pip --resource-group $rg --location $region -o none
+az network vnet-gateway create --name spoke2-ergw --resource-group $rg --location $region --public-ip-address spoke2-ergw-pip --vnet spoke2 --gateway-type "ExpressRoute" --sku "Standard" --no-wait
+
+#Enabling boot diagnostics for all VMs in the resource group (Serial console)
+echo Enabling boot diagnostics
+az vm boot-diagnostics enable --ids $(az vm list -g $rg --query '[].{id:id}' -o tsv) -o none
+
+### Installing tools for networking connectivity validation such as traceroute, tcptraceroute, iperf and others (check link below for more details) 
+echo "Installing net utilities inside VMs (traceroute, tcptraceroute, iperf3, hping3, and others)"
+nettoolsuri="https://raw.githubusercontent.com/dmauser/azure-vm-net-tools/main/script/nettools.sh"
+for vm in `az vm list -g $rg --query "[?storageProfile.imageReference.offer=='UbuntuServer'].name" -o tsv`
+do
+ az vm extension set \
+ --resource-group $rg \
+ --vm-name $vm \
+ --name customScript \
+ --publisher Microsoft.Azure.Extensions \
+ --protected-settings "{\"fileUris\": [\"$nettoolsuri\"],\"commandToExecute\": \"./nettools.sh\"}" \
+ --no-wait
+done
+
+#Spoke1 VPN Gateways provisioning status
+prState=$(az network vnet-gateway show -g $rg -n spoke1-ergw --query provisioningState -o tsv)
+if [[ $prState == 'Failed' ]];
+then
+    echo ER Gateway is in fail state. Deleting and rebuilding.
+    az network vnet-gateway delete -n spoke1-ergw -g $rg
+    az network vnet-gateway create --name spoke1-ergw --resource-group $rg --location $region --public-ip-address spoke1-ergw-pip --vnet spoke1 --gateway-type "ExpressRoute" --sku "Standard" --no-wait
+    sleep 5
+else
+    prState=''
+    while [[ $prState != 'Succeeded' ]];
+    do
+        prState=$(az network vnet-gateway show -g $rg -n spoke1-ergw --query provisioningState -o tsv)
+        echo "spoke1-ergw provisioningState="$prState
+        sleep 5
+    done
+fi
+
+#Spoke2 VPN Gateways provisioning status
+prState=$(az network vnet-gateway show -g $rg -n spoke2-ergw --query provisioningState -o tsv)
+if [[ $prState == 'Failed' ]];
+then
+    echo ER Gateway is in fail state. Deleting and rebuilding.
+    az network vnet-gateway delete -n spoke2-ergw -g $rg
+    az network vnet-gateway create --name spoke2-ergw --resource-group $rg --location $region --public-ip-address spoke2-ergw-pip --vnet spoke2 --gateway-type "ExpressRoute" --sku "Standard" --no-wait
+    sleep 5
+else
+    prState=''
+    while [[ $prState != 'Succeeded' ]];
+    do
+        prState=$(az network vnet-gateway show -g $rg -n spoke2-ergw --query provisioningState -o tsv)
+        echo "spoke2-ergw provisioningState="$prState
+        sleep 5
+    done
+fi
+
+
+# Connect ER Circuit
+erid1=""
+erauthorizationkey1= #Paste your AuthorizationKey
+az network vpn-connection create --name spoke1-to-avs \
+--resource-group $rg --vnet-gateway1 spoke1-ergw \
+--express-route-circuit2 $erid1 \
+--routing-weight 0 \
+--authorization-key $erauthorizationkey1 \
+ &>/dev/null &
+
+
+# Connect ER Circuit
+erid2="" #Paste your AuthorizationKey
+erauthorizationkey2= #Paste your AuthorizationKey
+az network vpn-connection create --name spoke2-to-avs \
+--resource-group $rg --vnet-gateway1 spoke2-ergw \
+--express-route-circuit2 $erid2 \
+--routing-weight 0 \
+--authorization-key $erauthorizationkey2 \
+ &>/dev/null &
+
+prState=''
+while [[ $prState != 'Succeeded' ]];
+do
+    prState=$(az network vpn-connection show --name spoke1-to-avs -g $rg  --query 'provisioningState' -o tsv)
+    echo "ER connection spoke1-to-avs provisioningState="$prState
+    sleep 5
+done
+
+prState=''
+while [[ $prState != 'Succeeded' ]];
+do
+    prState=$(az network vpn-connection show --name spoke2-to-avs -g $rg --query 'provisioningState' -o tsv)
+    echo "ER connection spoke2-to-avs provisioningState="$prState
+    sleep 5
+done
