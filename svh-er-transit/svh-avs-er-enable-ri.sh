@@ -7,9 +7,9 @@ riconfig=PrivateOnly #Routing Intenet configuration, valid parametersare: privat
 
 if [ "$riconfig" = "both" ]; then
  config=Private-and-Internet
-elif [ "$riconfig" = "internetonly" ]; then
+elif [ "$riconfig" = "InternetOnly" ]; then
  config=InternetOnly
-elif [ "$riconfig" = "privateonly" ]; then
+elif [ "$riconfig" = "PrivateOnly" ]; then
  config=PrivateOnly
 fi
 
