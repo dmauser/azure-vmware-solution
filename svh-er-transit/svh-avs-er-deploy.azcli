@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# Pre-Requisites
-echo Validating pre-requisites
-az extension add --name virtual-wan 
-az extension add --name azure-firewall 
-# or updating vWAN and AzFirewall CLI extensions
-az extension update --name virtual-wan
-az extension update --name azure-firewall 
-
 #Parameters
 region=eastus
 rg=lab-svh-avs # set your Resource Group
@@ -17,6 +9,23 @@ username=azureuser # Username
 password="Msft123Msft123" # Please change your password
 vmsize=Standard_DS1_v2 # VM Size
 firewallsku=Premium #Azure Firewall SKU Standard or Premium
+
+# Adding script starting time and finish time
+start=`date +%s`
+echo "Script started at $(date)"
+
+# Pre-Requisites
+# Check if virtual wan extension is installed if not install it
+if ! az extension list | grep -q virtual-wan; then
+    echo "virtual-wan extension is not installed, installing it now..."
+    az extension add --name virtual-wan --only-show-errors
+fi
+
+# Check if azure-firewall extension is installed if not install it
+if ! az extension list | grep -q azure-firewall; then
+    echo "azure-firewall extension is not installed, installing it now..."
+    az extension add --name azure-firewall --only-show-errors
+fi
 
 #Variables
 mypip=$(curl -4 ifconfig.io -s)
@@ -192,4 +201,9 @@ az monitor diagnostic-settings create -n 'toLogAnalytics' \
 
 echo Deployment has finished
 echo Start ExpressRoute provisioning with your Service Provider and onboard AVS ER Circuit.
-echo Enable Routing Intent via https://aka.ms/inter-hub or script svh-avs-er-enable-ri.azcli
+
+# Add script ending time but hours, minutes and seconds
+end=`date +%s`
+runtime=$((end-start))
+echo "Script finished at $(date)"
+echo "Total script execution time: $(($runtime / 3600)) hours $((($runtime / 60) % 60)) minutes and $(($runtime % 60)) seconds."

@@ -5,7 +5,7 @@ vwanname=svh-avs # vWAN name
 hubname=svhub # vHub name
 username=azureuser # Username
 password="Msft123Msft123" # Please change your password
-vmsize=Standard_B1s # VM Size
+vmsize=Standard_DS1_v2 # VM Size
 firewallsku=Premium #Azure Firewall SKU Standard or Premium
 
 #ExpressRoute specific variables
@@ -15,6 +15,10 @@ providerloc1=Megaport
 ername2="lab-svh-onprem-er-circuit"
 perloc2="Dallas"
 providerloc2=Megaport
+
+# Adding script starting time and finish time
+start=`date +%s`
+echo "Script started at $(date)"
 
 #Create ER circuits
 echo Creating ExpressRoute Circuits
@@ -68,3 +72,9 @@ do
     echo "ER connection connection-to-$ername1 provisioningState="$prState
     sleep 5
 done
+
+# Add script ending time but hours, minutes and seconds
+end=`date +%s`
+runtime=$((end-start))
+echo "Script finished at $(date)"
+echo "Total script execution time: $(($runtime / 3600)) hours $((($runtime / 60) % 60)) minutes and $(($runtime % 60)) seconds."
