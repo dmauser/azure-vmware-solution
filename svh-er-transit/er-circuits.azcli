@@ -68,8 +68,8 @@ echo Validating ER circuits connection to the Gateway
 prState=''
 while [[ $prState != 'Succeeded' ]];
 do
-    prState=$(az network express-route gateway connection show --name connection-to-$ername1 -g $rg --gateway-name $hubname-ergw --query 'provisioningState' -o tsv)
-    echo "ER connection connection-to-$ername1 provisioningState="$prState
+    prState=$(az network express-route gateway connection show --name connection-to-$ername2 -g $rg --gateway-name $hubname-ergw --query 'provisioningState' -o tsv)
+    echo "ER connection connection-to-$ername2 provisioningState="$prState
     sleep 5
 done
 

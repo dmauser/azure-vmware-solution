@@ -9,6 +9,7 @@ username=azureuser # Username
 password="Msft123Msft123" # Please change your password
 vmsize=Standard_DS1_v2 # VM Size
 firewallsku=Premium #Azure Firewall SKU Standard or Premium
+fwpolicyname=$hubname-fwpolicy #Firewall Policy Name
 
 # Adding script starting time and finish time
 start=`date +%s`
@@ -130,7 +131,6 @@ az network express-route gateway create -g $rg -n $hubname-ergw --location $regi
 
 echo Creating Azure Firewall Policy
 #Create firewall rules
-fwpolicyname=$hubname-fwpolicy #Firewall Policy Name
 az network firewall policy create --name $fwpolicyname --resource-group $rg --sku $firewallsku --enable-dns-proxy true --output none
 az network firewall policy rule-collection-group create --name NetworkRuleCollectionGroup --priority 200 --policy-name $fwpolicyname --resource-group $rg --output none
 #Adding any-to-any firewall rule

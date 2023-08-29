@@ -1,0 +1,54 @@
+# Parameters (make changes based on your requirements)
+rg=lab-svh-avsdr
+hub1name=sechub1
+hub2name=sechub2
+
+# Disable Routing Intent
+#Hub1
+az rest --method delete --uri https://management.azure.com/subscriptions/$subid/resourceGroups/$rg/providers/Microsoft.Network/virtualHubs/$hub1name/routingIntent/"$hub1name"_RoutingIntent?api-version=2022-01-01
+
+#Hub2
+az rest --method delete --uri https://management.azure.com/subscriptions/$subid/resourceGroups/$rg/providers/Microsoft.Network/virtualHubs/$hub2name/routingIntent/"$hub2name"_RoutingIntent?api-version=2022-01-01
+
+# Check status
+prState1='Deleting'
+prState2='Deleting'
+while [[ $prState2 == 'Deleting' ]];
+do
+    prState1=$(az rest --method get --uri /subscriptions/$subid/resourceGroups/$rg/providers/Microsoft.Network/virtualHubs/$hub1name/routingIntent/$hub1name_RoutingIntent?api-version=2022-01-01 --query 'value[].properties.provisioningState' -o tsv)
+    echo "$hub1name routing intent provisioningState="$prState1
+    prState2=$(az rest --method get --uri /subscriptions/$subid/resourceGroups/$rg/providers/Microsoft.Network/virtualHubs/$hub2name/routingIntent/$hub2name_RoutingIntent?api-version=2022-01-01 --query 'value[].properties.provisioningState' -o tsv)
+    echo "$hub2name routing intent provisioningState="$prState2
+    sleep 15
+done
+echo "$hub1name routing intent disabled"
+echo "$hub2name routing intent disabled"
+
+az network firewall delete -g $rg -n $hub1name-azfw &>/dev/null && echo "Deleted $hub1name-azfw" &>/dev/null &
+az network firewall delete -g $rg -n $hub2name-azfw &>/dev/null && echo "Deleted $hub2name-azfw" &>/dev/null &
+
+# Loop script to check deletion for both azure firewalls
+while true
+do
+    az network firewall show -g $rg -n $hub1name-azfw &>/dev/null
+    if [ $? -eq 0 ]; then
+        echo "Waiting for $hub1name-azfw to be deleted..."
+        sleep 10
+    else
+        echo "$hub1name-azfw deleted successfully"
+        break
+    fi
+done
+while true
+do
+    az network firewall show -g $rg -n $hub2name-azfw &>/dev/null
+    if [ $? -eq 0 ]; then
+        echo "Waiting for $hub2name-azfw to be deleted..."
+        sleep 10
+    else
+        echo "$hub2name-azfw deleted successfully"
+        break
+    fi
+done
+
+ 
