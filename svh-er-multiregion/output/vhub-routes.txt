@@ -1,0 +1,43 @@
+vHUB: sechub1
+Effective route table: sechub1-azfw
+AddressPrefixes    AsPath                                     NextHopType
+-----------------  -----------------------------------------  --------------------------
+172.16.4.0/24      12076-12076                                ExpressRouteGateway
+172.16.5.0/24      12076-12076                                ExpressRouteGateway
+172.16.6.0/24      12076-12076                                ExpressRouteGateway
+10.20.0.0/26       12076-65002-16550                          ExpressRouteGateway
+172.16.2.0/24                                                 Virtual Network Connection
+172.16.1.0/24                                                 Virtual Network Connection
+172.16.3.0/24                                                 Virtual Network Connection
+192.168.2.0/24     12076-12076                                ExpressRouteGateway
+10.10.0.0/25       12076-65001-16550                          ExpressRouteGateway
+10.20.0.64/26      12076-65002-16550                          ExpressRouteGateway
+10.10.0.128/25     12076-65001-16550                          ExpressRouteGateway
+10.20.0.128/26     12076-65002-16550                          ExpressRouteGateway
+10.20.0.192/26     12076-65002-16550                          ExpressRouteGateway
+10.154.0.0/25      12076-65010-16550                          ExpressRouteGateway
+10.154.0.128/25    12076-65010-16550                          ExpressRouteGateway
+10.20.0.0/24       12076-12076-12076-65001-12076-65010-12076  ExpressRouteGateway
+0.0.0.0/0                                                     Internet
+
+vHUB: sechub2
+Effective route table: sechub2-azfw
+AddressPrefixes    AsPath                                                 NextHopType
+-----------------  -----------------------------------------------------  --------------------------
+10.20.0.0/24       65520-65520-12076-12076-12076-65001-12076-65010-12076  Remote Hub
+172.16.4.0/24                                                             Virtual Network Connection
+172.16.5.0/24                                                             Virtual Network Connection
+172.16.6.0/24                                                             Virtual Network Connection
+172.16.1.0/24      12076-12076                                            ExpressRouteGateway
+172.16.2.0/24      12076-12076                                            ExpressRouteGateway
+172.16.3.0/24      12076-12076                                            ExpressRouteGateway
+192.168.1.0/24     12076-12076                                            ExpressRouteGateway
+10.20.0.0/26       12076-65002-16550                                      ExpressRouteGateway
+10.20.0.64/26      12076-65002-16550                                      ExpressRouteGateway
+10.20.0.128/26     12076-65002-16550                                      ExpressRouteGateway
+10.20.0.192/26     12076-65002-16550                                      ExpressRouteGateway
+10.154.0.0/25      12076-65010-16550                                      ExpressRouteGateway
+10.154.0.128/25    12076-65010-16550                                      ExpressRouteGateway
+10.10.0.0/25       12076-12076-12076-65010-12076-65001-16550              ExpressRouteGateway
+10.10.0.128/25     12076-12076-12076-65010-12076-65001-16550              ExpressRouteGateway
+0.0.0.0/0                                                                 Internet

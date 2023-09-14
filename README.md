@@ -45,15 +45,14 @@ firewallsku=Premium #Azure Firewall SKU Standard or Premium
 #### Considerations
 
 - ExpressRoute Circuits are not created as part of this lab.
-- Routing intent is enabled only for Private Traffic. Currently, Private and Internet traffic is not supported for most of the regions. More details see purple box note under Background session of [How to configure Virtual WAN Hub routing intent and routing policies](https://learn.microsoft.com/en-us/azure/virtual-wan/how-to-routing-policies).
+- You must open a support ticket to enable ER to ER transit using Azure Virtual WAN + Routing Intent. See: [Transit connectivity between ExpressRoute circuits with routing intent](https://learn.microsoft.com/en-us/azure/virtual-wan/how-to-routing-policies#expressroute).
 - After connecting the AVS ExpressRoute Circuit, go to Firewall Manager - Security Configuration and enable secure Internet Traffic to allow the default route (0.0.0.0/0) to be advertised to the AVS environment.
 - Add AVS /22 prefix inside the Private traffic prefixes.
 
 #### Field notes
 
 - Review carefully all the considerations when enabling routing policies/intent by reviewing [Virtual WAN Hub routing intent and routing policies - Troubleshooting data path](https://learn.microsoft.com/en-us/azure/virtual-wan/how-to-routing-policies#troubleshooting). Especially RFC 1918 prefixes (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) which are advertised by default from Secured-vHUB. If the On-premises ExpressRoute circuit already advertises those prefixes, routing adjustments must be made before enabling Routing-Intent.
-- Always onboard ExpressRoute circuits (including On-premises) after converting Secured-vHub plus Routing Policies/Intent. Otherwise, converting after it will have the default route (0.0.0.0/0) advertised to all connections. That will give you granular control on securing Internet traffic (the default route 0/0 advertisement).
-
+- In case customer is already advertising RFC 1918, before enable Routing Intent is important to break them in two halves (more specific) on the customer side to ensure they can keep attracting private traffic from Azure to their on-premises network. Here is how that breakdown should be:, 10.0.0.0/9, 10.128.0.0/9, 172.16.0.0/13, 172.24.0.0/13, 192.168.0.0/17, 192.168.128.0/17.
 
 ### LAB2: AVS (ER) to On-prem (VPN) transit using Secured-vHub+Routing Intent
 

@@ -3,7 +3,7 @@
 # Parameters (make changes based on your requirements)
 region1=eastus #set region1
 region2=westus #set region2
-rg=lab-svh-avsdr #set resource group
+rg=lab-svh-avsdr2 #set resource group
 vwanname=svh-avsdr #set vWAN name
 hub1name=sechub1 #set Hub1 name
 hub2name=sechub2 #set Hub2 name
@@ -214,13 +214,34 @@ done
 
 echo Creating $hub1name Azure Firewall Policy
 #Create firewall rules
-fwpolicyname=$hub1name-fwpolicy #Firewall Policy Name
-az network firewall policy create --name $fwpolicyname --resource-group $rg --sku $firewalltier --output none --only-show-errors
-az network firewall policy rule-collection-group create --name NetworkRuleCollectionGroup --priority 200 --policy-name $fwpolicyname --resource-group $rg --output none --only-show-errors
+fwpolicyname1=$hub1name-fwpolicy #Firewall Policy Name
+az network firewall policy create --name $fwpolicyname1 --resource-group $rg --sku $firewalltier --output none --only-show-errors
+az network firewall policy rule-collection-group create --name NetworkRuleCollectionGroup --priority 200 --policy-name $fwpolicyname1 --resource-group $rg --output none --only-show-errors
 #Adding any-to-any firewall rule
 az network firewall policy rule-collection-group collection add-filter-collection \
  --resource-group $rg \
- --policy-name $fwpolicyname \
+ --policy-name $fwpolicyname1 \
+ --name GenericCollection \
+ --rcg-name NetworkRuleCollectionGroup \
+ --rule-type NetworkRule \
+ --rule-name AnytoAny \
+ --action Allow \
+ --ip-protocols "Any" \
+ --source-addresses "*" \
+ --destination-addresses  "*" \
+ --destination-ports "*" \
+ --collection-priority 100 \
+ --output none
+
+echo Creating $hub2name Azure Firewall Policy
+#Create firewall rules
+fwpolicyname2=$hub2name-fwpolicy #Firewall Policy Name
+az network firewall policy create --name $fwpolicyname2 --resource-group $rg --sku $firewalltier --output none --only-show-errors
+az network firewall policy rule-collection-group create --name NetworkRuleCollectionGroup --priority 200 --policy-name $fwpolicyname2 --resource-group $rg --output none --only-show-errors
+#Adding any-to-any firewall rule
+az network firewall policy rule-collection-group collection add-filter-collection \
+ --resource-group $rg \
+ --policy-name $fwpolicyname2 \
  --name GenericCollection \
  --rcg-name NetworkRuleCollectionGroup \
  --rule-type NetworkRule \
@@ -234,8 +255,28 @@ az network firewall policy rule-collection-group collection add-filter-collectio
  --output none
 
 echo Deploying Azure Firewall inside $hub1name vHub ...
-fwpolid=$(az network firewall policy show --resource-group $rg --name $fwpolicyname --query id --output tsv)
-az network firewall create -g $rg -n $hub1name-azfw --sku AZFW_Hub --tier $firewalltier --virtual-hub $hub1name --public-ip-count 1 --firewall-policy $fwpolid --location $region1 --output none
+fwpolicyname1=$hub1name-fwpolicy #Firewall Policy Name
+fwpolid=$(az network firewall policy show --resource-group $rg --name $fwpolicyname1 --query id --output tsv)
+az network firewall create -g $rg -n $hub1name-azfw --sku AZFW_Hub --tier $firewalltier --virtual-hub $hub1name --public-ip-count 1 --firewall-policy $fwpolid --location $region1 --output none &>/dev/null &
+
+echo Deploying Azure Firewall inside $hub2name vHub...
+fwpolicyname2=$hub2name-fwpolicy #Firewall Policy Name
+fwpolid=$(az network firewall policy show --resource-group $rg --name $fwpolicyname2 --query id --output tsv)
+az network firewall create -g $rg -n $hub2name-azfw --sku AZFW_Hub --tier $firewalltier --virtual-hub $hub2name --public-ip-count 1 --firewall-policy $fwpolid --location $region2 --output none &>/dev/null &
+
+# Checking Azure Firewalls provisioning status
+echo Checking Azure Firewall provisioning status...
+sleep 5
+prState1=''
+prState2=''
+while [[ $prState1 != 'Succeeded' || $prState2 != 'Succeeded' ]];
+do
+    prState1=$(az network firewall show -g $rg -n $hub1name-azfw --query 'provisioningState' -o tsv)
+    echo "$hub1name-azfw provisioningState="$prState1
+    prState2=$(az network firewall show -g $rg -n $hub2name-azfw --query 'provisioningState' -o tsv)
+    echo "$hub2name-azfw provisioningState="$prState2
+    sleep 5
+done
 
 echo Enabling $hub1name Azure Firewall diagnostics...
 
@@ -265,31 +306,6 @@ az monitor diagnostic-settings create -n 'toLogAnalytics' \
 --logs '[{"category":"AzureFirewallApplicationRule","Enabled":true}, {"category":"AzureFirewallNetworkRule","Enabled":true}, {"category":"AzureFirewallDnsProxy","Enabled":true}]' \
 --metrics '[{"category": "AllMetrics","enabled": true}]' \
 --output none
-
-echo Creating $hub2name Azure Firewall Policy
-#Create firewall rules
-fwpolicyname=$hub2name-fwpolicy #Firewall Policy Name
-az network firewall policy create --name $fwpolicyname --resource-group $rg --sku $firewalltier --output none --only-show-errors
-az network firewall policy rule-collection-group create --name NetworkRuleCollectionGroup --priority 200 --policy-name $fwpolicyname --resource-group $rg --output none --only-show-errors
-#Adding any-to-any firewall rule
-az network firewall policy rule-collection-group collection add-filter-collection \
- --resource-group $rg \
- --policy-name $fwpolicyname \
- --name GenericCollection \
- --rcg-name NetworkRuleCollectionGroup \
- --rule-type NetworkRule \
- --rule-name AnytoAny \
- --action Allow \
- --ip-protocols "Any" \
- --source-addresses "*" \
- --destination-addresses  "*" \
- --destination-ports "*" \
- --collection-priority 100 \
- --output none
-
-echo Deploying Azure Firewall inside $hub2name vHub...
-fwpolid=$(az network firewall policy show --resource-group $rg --name $fwpolicyname --query id --output tsv)
-az network firewall create -g $rg -n $hub2name-azfw --sku AZFW_Hub --tier $firewalltier --virtual-hub $hub2name --public-ip-count 1 --firewall-policy $fwpolid --location $region2 --output none
 
 echo Enabling $hub2name Azure Firewall diagnostics...
 ## Log Analytics workspace name. 

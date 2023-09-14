@@ -8,7 +8,7 @@ if ! az extension list | grep -q virtual-wan; then
 fi
 
 # Parameters (make changes based on your requirements)
-rg=lab-svh-avsdr
+rg=lab-svh-avsdr2
 vwanname=svh-avsdr #set vWAN name
 hub1name=sechub1 #set Hub1 name
 hub2name=sechub2 #set Hub2 name
@@ -20,10 +20,10 @@ perloc1="Dallas"
 perloc2="Chicago"
 providerloc1=Megaport
 providerloc2=Megaport
-ername1="er-ckt-$hub1name"
-ername2="er-avs-$hub1name" 
-ername3="er-ckt-$hub2name"
-ername4="er-avs-$hub2name" 
+ername1="svher-ckt-$hub1name"
+ername2="svher-avs-$hub1name" 
+ername3="svher-ckt-$hub2name"
+ername4="svher-avs-$hub2name" 
 
 # Adding script starting time and finish time
 start=`date +%s`
@@ -47,7 +47,7 @@ echo Checking ExpressRoute Gateway Provisioning State...
 echo checking ExpressRoute Gateway deployment...
 prState1=''
 prState2=''
-while [[ $prState1 != 'Succeeded' && $prState2 != 'Succeeded' ]];
+while [[ $prState1 != 'Succeeded' || $prState2 != 'Succeeded' ]];
 do
     prState1=$(az network express-route gateway show -g $rg -n $hub1name-ergw --query 'provisioningState' -o tsv)
     echo "$hub1name-ergw provisioningState="$prState1

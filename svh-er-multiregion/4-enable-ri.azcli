@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Parameters (make changes based on your requirements)
-rg=lab-svh-avsdr
+rg=lab-svh-avsdr2
 vwanname=svh-avsdr #set vWAN name
 hub1name=sechub1 #set Hub1 name
 hub2name=sechub2 #set Hub2 name
@@ -40,7 +40,7 @@ az deployment group create --name $hub2name-ri \
 subid=$(az account list --query "[?isDefault == \`true\`].id" --all -o tsv)
 prState1=''
 prState2=''
-while [[ $prState1 != 'Succeeded' && $prState2 != 'Succeeded' ]];
+while [[ $prState1 != 'Succeeded' || $prState2 != 'Succeeded' ]];
 do
     prState1=$(az rest --method get --uri /subscriptions/$subid/resourceGroups/$rg/providers/Microsoft.Network/virtualHubs/$hub1name/routingIntent/$hub1name_RoutingIntent?api-version=2022-01-01 --query 'value[].properties.provisioningState' -o tsv)
     echo "$hub1name routing intent provisioningState="$prState1
