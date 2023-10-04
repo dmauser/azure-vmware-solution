@@ -1,6 +1,6 @@
 ---
 marp: true
-theme: uncover
+theme: gaia
 class: invert
 ---
 

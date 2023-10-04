@@ -1,35 +1,36 @@
 
 # Create environments:
 envname1=onprem-dal
-vpcrange1=10.154.0.0/24
+vpcrange1="10.154.0.0/24"
 envname2=avs-hub1-lab
-vpcrange2=10.10.0.0/24
+vpcrange2="10.10.0.0/24"
 envname3=avs-hub2-lab
-vpcrange3=10.20.0.0/24
+vpcrange3="10.20.0.0/24"
 
 # Parameters:
 project=angular-expanse-327722 #Set your project Name. Get your PROJECT_ID use command: gcloud projects list 
 region=us-central1 #Set your region. Get Regions/Zones Use command: gcloud compute zones list
 zone=us-central1-b # Set availability zone: a, b or c.
+mypip=$(curl -4 ifconfig.io -s) #Gets your Home Public IP or replace with that information. It will add it to the Firewall Rule.
 
 # echo array for each environment
 env=( $envname1 $envname2 $envname3 )
-vpc=( $vpcrange1 $vpcrange2 $vpcrange3 )
+vpc=( "$vpcrange1" "$vpcrange2" "$vpcrange3" )
 
 for i in "${!env[@]}"; do 
     echo "Creating ${env[$i]} with VPC range ${vpc[$i]}"
     #Create VPC + Subnet
     gcloud config set project $project
     gcloud compute networks create ${env[$i]}-vpc --subnet-mode=custom --mtu=1460 --bgp-routing-mode=regional
-    gcloud compute networks subnets create ${env[$i]}-subnet --range=$vpcrange --network=${env[$i]}-vpc --region=$region
+    gcloud compute networks subnets create ${env[$i]}-subnet --range=${vpc[$i]} --network=${env[$i]}-vpc --region=$region
     #Create Firewall Rule
     gcloud compute firewall-rules create ${env[$i]}-allow-traffic-from-azure --network ${env[$i]}-vpc --allow tcp,udp,icmp --source-ranges 192.168.0.0/16,10.0.0.0/8,172.16.0.0/16,35.235.240.0/20,$mypip/32
     #Create Unbutu VM:
-    gcloud compute instances create ${env[$i]}-vm1 --zone=$zone --machine-type=f1-micro --network-interface=subnet=${env[$i]}-subnet,network-tier=PREMIUM --image=ubuntu-1804-bionic-v20220126 --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=${env[$i]}-vm1 
+    gcloud compute instances create ${env[$i]}-vm1 --zone=$zone --machine-type=f1-micro --network-interface=subnet=${env[$i]}-subnet,network-tier=PREMIUM --image-family=ubuntu-2204-lts --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=${env[$i]}-vm1 
     #Cloud Router: #***********Validate************
     gcloud compute routers create ${env[$i]}-router --region=$region --network=${env[$i]}-vpc --asn=16550
     #DirectConnect via MegaPort:
-    gcloud compute interconnects attachments partner create ${env[$i]}-vlan --region $region --edge-availability-domain availability-domain-1 --router $envname-router --admin-enabled
+    gcloud compute interconnects attachments partner create ${env[$i]}-vlan --region $region --edge-availability-domain availability-domain-1 --router ${env[$i]}-router --admin-enabled
 done
 
 # loop script to describe each interconnect environment
@@ -70,6 +71,7 @@ gcloud compute routers update-bgp-peer $envname3-router \
 gcloud compute ssh $envname1-vm1 --zone=$zone
 gcloud compute ssh $envname2-vm1 --zone=$zone
 gcloud compute ssh $envname3-vm1 --zone=$zone
+hostname -I
 
 
 # AVS Hub1
@@ -88,7 +90,7 @@ env=( $envname1 $envname2 $envname3 )
 vpc=( $vpcrange1 $vpcrange2 $vpcrange3 )
 
 for i in "${!env[@]}"; do 
-    echo "Creating ${env[$i]} with VPC range ${vpc[$i]}"
+    echo "Deleting ${env[$i]} with VPC range ${vpc[$i]}"
     gcloud compute interconnects attachments delete ${env[$i]}-vlan --region $region --quiet 
     gcloud compute routers delete ${env[$i]}-router --region=$region --quiet
     gcloud compute instances delete ${env[$i]}-vm1 --zone=$zone --quiet
@@ -127,7 +129,7 @@ gcloud compute networks subnets create $envname-subnet --range=$vpcrange --netwo
 gcloud compute firewall-rules create $envname-allow-traffic-from-azure --network $envname-vpc --allow tcp,udp,icmp --source-ranges 192.168.0.0/16,10.0.0.0/8,172.16.0.0/16,35.235.240.0/20,$mypip/32
 
 #Create Unbutu VM:
-gcloud compute instances create $envname-vm1 --zone=$zone --machine-type=f1-micro --network-interface=subnet=$envname-subnet,network-tier=PREMIUM --image=ubuntu-1804-bionic-v20220126 --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=$envname-vm1 
+gcloud compute instances create $envname-vm1 --zone=$zone --machine-type=f1-micro --network-interface=subnet=$envname-subnet,network-tier=PREMIUM --image=ubuntu-1804-bionic-v20230605 --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=$envname-vm1 
 #gcloud compute instances create $envname-vm1 --zone=$zone --machine-type=f1-micro --network-interface=subnet=$envname-subnet,network-tier=PREMIUM --image-family=ubuntu-1804-lts-arm64 --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=$envname-vm1 
 
 #Cloud Router: #***********Validate************
@@ -162,7 +164,7 @@ gcloud compute networks subnets create $envname-subnet --range=$vpcrange --netwo
 gcloud compute firewall-rules create $envname-allow-traffic-from-azure --network $envname-vpc --allow tcp,udp,icmp --source-ranges 192.168.0.0/16,10.0.0.0/8,172.16.0.0/16,35.235.240.0/20,$mypip/32
 
 #Create Unbutu VM:
-gcloud compute instances create $envname-vm1 --zone=$zone --machine-type=f1-micro --network-interface=subnet=$envname-subnet,network-tier=PREMIUM --image=ubuntu-1804-bionic-v20220126 --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=$envname-vm1 
+gcloud compute instances create $envname-vm1 --zone=$zone --machine-type=f1-micro --network-interface=subnet=$envname-subnet,network-tier=PREMIUM --image=ubuntu-1804-bionic-v20230605 --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=$envname-vm1 
 #gcloud compute instances create $envname-vm1 --zone=$zone --machine-type=f1-micro --network-interface=subnet=$envname-subnet,network-tier=PREMIUM --image-family=ubuntu-1804-lts-arm64 --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-type=pd-balanced --boot-disk-device-name=$envname-vm1 
 
 #Cloud Router: #***********Validate************

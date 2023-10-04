@@ -5,12 +5,13 @@ hub1name=sechub1 #set Hub1 name
 hub2name=sechub2 #set Hub2 name
 region1=$(az network vhub show -n $hub1name -g $rg --query location -o tsv)
 region2=$(az network vhub show -n $hub2name -g $rg --query location -o tsv)
+firewalltier=basic
 
 #ExpressRoute specific variables
-ername1="er-ckt-$hub1name"
-ername2="er-avs-$hub1name" 
-ername3="er-ckt-$hub2name"
-ername4="er-avs-$hub2name" 
+ername1="svher-ckt-$hub1name"
+ername2="svher-avs-$hub1name" 
+ername3="svher-ckt-$hub2name"
+ername4="svher-avs-$hub2name" 
 
 # Dump ExpressRoute Circuit routes
 echo "***** On-prem ER Circuit Routes *****" && \
@@ -33,29 +34,90 @@ do
    echo
 done
 
-# SSH Spoke1vm to Spoke2vm
-ssh azureuser@20.127.9.198
 
-# remove Global Reach from er-ckt-sechub1
-az network express-route update -n $ername1 -g $rg --set allowGlobalReach=false
+# Clean up
+# Disconnect ExpressRoute from vWAN Hub1
+az network express-route gateway connection delete -g $rg -n $hub1name-conn-to-$ername1 --gateway-name $hub1name-ergw -o none
+az network express-route gateway connection delete -g $rg -n $hub1name-conn-to-$ername2 --gateway-name $hub1name-ergw -o none
+az network express-route gateway connection delete -g $rg -n $hub1name-conn-to-$ername4 --gateway-name $hub1name-ergw -o none
 
-az network connection 
-
-# remove Global Reach from er-ckt-sechub2
-az network express-route update -n $ername3 -g $rg --set allowGlobalReach=false
-
-
-az network express-route peering connection create -g $rg --circuit-name $ername2 --peering-name AzurePrivatePeering -n AVS-to-Onprem --address-prefix 10.200.0.0/29 --peer-circuit 
-
-az network express-route peering connection delete -g $rg --circuit-name $ername1 --peering-name AzurePrivatePeering -n AVS-to-Onprem 
-
-az network express-route peering connection create -g $rg --circuit-name $ername2 --peering-name AzurePrivatePeering -n AVS-to-Onprem --peer-circuit /subscriptions/78216abe-8139-4b45-8715-6bab2010101e/resourceGroups/lab-svh-avsdr/providers/Microsoft.Network/expressRouteCircuits/er-ckt-sechub1/peerings/AzurePrivatePeering --address-prefix 10.200.0.0/29 
+# Disconnect ExpressRoute from vWAN Hub2
+az network express-route gateway connection delete -g $rg -n $hub2name-conn-to-$ername4 --gateway-name $hub2name-ergw -o none
+az network express-route gateway connection delete -g $rg -n $hub2name-conn-to-$ername1 --gateway-name $hub2name-ergw -o none
 
 
-az network express-route peering update --remove -g $rg --circuit-name $ername1 
+prState=''
+while [[ $prState != 'Succeeded' ]];
+do
+    prState=$(az network express-route gateway connection show --name $hub1name-conn-to-$ername1 -g $rg --gateway-name $hub1name-ergw --query 'provisioningState' -o tsv)
+    echo "ER connection $hub1name-conn-to-$ername1 provisioningState="$prState
+    sleep 5
+done
+
+# Delete ExpressRoute Private Peerings
+az network express-route peering delete -g $rg -n AzurePrivatePeering --circuit-name $ername1 -o none --no-wait
+az network express-route peering delete -g $rg -n AzurePrivatePeering --circuit-name $ername2 -o none --no-wait
+az network express-route peering delete -g $rg -n AzurePrivatePeering --circuit-name $ername4 -o none --no-wait
+
+# Delete Megaport ER Circuits
 
 
 # Connectivity test
 nc -z -v 10.154.0.2 22
 nc -z -v 10.10.0.2 22
 nc -z -v 10.20.0.2 22
+
+
+# Reset Onpremises network prefixes
+# Adjust Route propagation On-premises
+#Route propagation
+bgpsession=$(gcloud compute routers describe $envname1-router --region=$region --format='value(bgpPeers.name)')
+gcloud compute routers update-bgp-peer $envname1-router \
+ --peer-name $bgpsession \
+ --advertisement-mode custom \
+ --set-advertisement-ranges 10.154.0.0/24 \
+ --region=$region
+
+# Adjust Route propagation On-premises
+#Route propagation
+bgpsession=$(gcloud compute routers describe $envname1-router --region=$region --format='value(bgpPeers.name)')
+gcloud compute routers update-bgp-peer $envname1-router \
+ --peer-name $bgpsession \
+ --advertisement-mode custom \
+ --set-advertisement-ranges 10.0.0.0/9,10.128.0.0/9 \
+ --region=$region
+
+# Adjust Route propagation On-premises
+#Route propagation
+bgpsession=$(gcloud compute routers describe $envname1-router --region=$region --format='value(bgpPeers.name)')
+gcloud compute routers update-bgp-peer $envname1-router \
+ --peer-name $bgpsession \
+ --advertisement-mode custom \
+ --set-advertisement-ranges 10.154.0.0/25,10.154.0.128/25 \
+ --region=$region
+
+# Add Azure Firewall
+
+echo Deploying Azure Firewall inside $hub1name vHub ...
+fwpolicyname1=$hub1name-fwpolicy #Firewall Policy Name
+fwpolid=$(az network firewall policy show --resource-group $rg --name $fwpolicyname1 --query id --output tsv)
+az network firewall create -g $rg -n $hub1name-azfw --sku AZFW_Hub --tier $firewalltier --virtual-hub $hub1name --public-ip-count 1 --firewall-policy $fwpolid --location $region1 --output none &>/dev/null &
+
+echo Deploying Azure Firewall inside $hub2name vHub...
+fwpolicyname2=$hub2name-fwpolicy #Firewall Policy Name
+fwpolid=$(az network firewall policy show --resource-group $rg --name $fwpolicyname2 --query id --output tsv)
+az network firewall create -g $rg -n $hub2name-azfw --sku AZFW_Hub --tier $firewalltier --virtual-hub $hub2name --public-ip-count 1 --firewall-policy $fwpolid --location $region2 --output none &>/dev/null &
+
+# Checking Azure Firewalls provisioning status
+echo Checking Azure Firewall provisioning status...
+sleep 5
+prState1=''
+prState2=''
+while [[ $prState1 != 'Succeeded' || $prState2 != 'Succeeded' ]];
+do
+    prState1=$(az network firewall show -g $rg -n $hub1name-azfw --query 'provisioningState' -o tsv)
+    echo "$hub1name-azfw provisioningState="$prState1
+    prState2=$(az network firewall show -g $rg -n $hub2name-azfw --query 'provisioningState' -o tsv)
+    echo "$hub2name-azfw provisioningState="$prState2
+    sleep 5
+done
