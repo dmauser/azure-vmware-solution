@@ -9,8 +9,8 @@ az network vnet create --address-prefixes 10.40.161.0/24 -n spoke2 -g $rg -l $re
 
 echo Creating Spoke VMs...
 # Creating a VM in each connected spoke
-az vm create -n spoke1VM  -g $rg --image ubuntults --size $vmsize -l $region --subnet main --vnet-name spoke1 --admin-username $username --admin-password $password --nsg "" --no-wait
-az vm create -n spoke2VM  -g $rg --image ubuntults --size $vmsize -l $region --subnet main --vnet-name spoke2 --admin-username $username --admin-password $password --nsg "" --no-wait
+az vm create -n spoke1VM  -g $rg --image Ubuntu2204 --size $vmsize -l $region --subnet main --vnet-name spoke1 --admin-username $username --admin-password $password --nsg "" --no-wait
+az vm create -n spoke2VM  -g $rg --image Ubuntu2204 --size $vmsize -l $region --subnet main --vnet-name spoke2 --admin-username $username --admin-password $password --nsg "" --no-wait
 
 echo Associating NSG on Spokes and Branch VNETs
 #Updating NSGs:

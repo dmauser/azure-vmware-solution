@@ -48,13 +48,13 @@ az network vnet subnet update --id $(az network vnet list -g $rg --query '[?cont
 
 echo Creating VMs in the branch...
 # Creating a VM in each branch spoke
-az vm create -n branchVM  -g $rg --image ubuntults --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name branch --admin-username $username --admin-password $password --nsg "" --no-wait
+az vm create -n branchVM  -g $rg --image Ubuntu2204 --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name branch --admin-username $username --admin-password $password --nsg "" --no-wait
 
 echo Creating Spoke VMs...
 # Creating a VM in each connected spoke
-az vm create -n spoke1VM  -g $rg --image ubuntults --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name spoke1 --admin-username $username --admin-password $password --nsg "" --no-wait
-az vm create -n spoke2VM  -g $rg --image ubuntults --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name spoke2 --admin-username $username --admin-password $password --nsg "" --no-wait
-az vm create -n spoke3VM  -g $rg --image ubuntults --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name spoke3 --admin-username $username --admin-password $password --nsg "" --no-wait
+az vm create -n spoke1VM  -g $rg --image Ubuntu2204 --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name spoke1 --admin-username $username --admin-password $password --nsg "" --no-wait
+az vm create -n spoke2VM  -g $rg --image Ubuntu2204 --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name spoke2 --admin-username $username --admin-password $password --nsg "" --no-wait
+az vm create -n spoke3VM  -g $rg --image Ubuntu2204 --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name spoke3 --admin-username $username --admin-password $password --nsg "" --no-wait
 
 echo Creating VPN Gateway in the branch...
 # Creating pips for VPN GW's in each branch
