@@ -44,6 +44,24 @@ do
  --output none
 done
 
+#Creating Internal Load Balancer, Frontend IP, Backend, probe and LB Rule.
+echo Creating Internal Load Balancer, Frontend IP, Backend, probe and LB Rule.
+az network lb create -g $rg --name $nvavnetnamer1-$nvaintname-ilb --sku Standard --frontend-ip-name frontendip1 --backend-pool-name nvabackend --vnet-name $nvavnetnamer1 --subnet=$nvasubnetname --location $region --output none --only-show-errors
+az network lb probe create -g $rg --lb-name $nvavnetnamer1-$nvaintname-ilb --name sshprobe --protocol tcp --port 22 --output none  
+az network lb rule create -g $rg --lb-name $nvavnetnamer1-$nvaintname-ilb --name haportrule1 --protocol all --frontend-ip-name frontendip1 --backend-pool-name nvabackend --probe-name sshprobe --frontend-port 0 --backend-port 0 --output none
+
+# Attach NVAs to the Backend as NICs
+for nvaname in $nvanames
+do
+  az network nic ip-config address-pool add \
+  --address-pool nvabackend \
+  --ip-config-name ipconfig1 \
+  --nic-name $nvaname-nic \
+  --resource-group $rg \
+  --lb-name $nvavnetnamer1-$nvaintname-ilb \
+  --output none
+done
+
 #Create NSG to allow SSH from Remote IP and allow RFC1918 (required by NVA)
 az network nsg create --resource-group $rg --name default-nsg-$region --location $region -o none
 az network nsg rule create -g $rg --nsg-name default-nsg-$region -n allow-RFC-1918 \

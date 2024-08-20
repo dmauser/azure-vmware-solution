@@ -1,0 +1,96 @@
+
+
+#!/bin/bash
+
+#Parameters
+region=eastus2
+rg=lab2-svh-avs # set your Resource Group
+vwanname=svh-avs # vWAN name
+hubname1=svhub
+hubname2=hub2
+username=azureuser # Username
+password="Msft123Msft123" # Please change your password
+vmsize=Standard_DS1_v2 # VM Size
+
+#NVA specific variables:
+# Deploy BGP endpoint (Make the changes based on your needs)
+nvavnetnamer1=spoke1 #Target NET
+asn_frr=65002 # Set ASN
+instances=2 #Set number of NVA instaces to be created
+nvaintname=linux-nva #NVA instance name
+nvasubnetname=nvasubnet #Existing Subnet where NVA gets deployed
+hubtopeer=$hubname2 #Note: VNET has to be connected to the same hub
+hubtoremove=$hubname1
+nvanames=$(i=1;while [ $i -le $instances ];do echo $nvavnetnamer1-$nvaintname$i; ((i++));done)
+
+# Configure vHub Routing Preference
+echo Configuring vHub Routing Preference...
+az network vhub update --hub-routing-preference ASPath --name $hubname1 --resource-group $rg --no-wait
+az network vhub update --hub-routing-preference ASPath --name $hubname2 --resource-group $rg --no-wait
+
+# Remove BGP peering vhub
+for nvaname in $nvanames
+do
+  az network vhub bgpconnection delete --resource-group $rg --vhub-name $hubtoremove --name $nvaname --yes
+done
+
+# Remove spoke1 vnet connection from $hubname1
+az network vhub connection delete --resource-group $rg --vhub-name $hubtoremove --name spoke1conn --yes
+
+# Connect spoke1 vnet to $hubname2
+az network vhub connection create --resource-group $rg --vhub-name $hubname2 --name spoke1conn --remote-vnet $nvavnetnamer1 -o none --internet-security false
+
+# Peer NVA to the new vHUB
+for nvaname in $nvanames
+do
+ az network vhub bgpconnection create --resource-group $rg \
+ --vhub-name $hubtopeer \
+ --name $nvaname \
+ --peer-asn $asn_frr \
+ --peer-ip $(az network nic show --name $nvaname-nic --resource-group $rg --query ipConfigurations[0].privateIPAddress -o tsv) \
+ --vhub-conn $(az network vhub connection show --name $nvavnetnamer1'conn' --resource-group $rg --vhub-name $hubtopeer --query id -o tsv) \
+ --output none
+done
+
+# Configure NVAs using FRR to use new Hub2 BGP peers using run command and vtysh
+for nvaname in $nvanames
+do
+  az vm run-command invoke -g $rg -n $nvaname --command-id RunShellScript --no-wait -o none --scripts '
+#!/bin/bash
+
+vtysh <<EOF
+configure terminal
+
+# Change neighbor 192.168.1.68 to 192.168.2.68
+for nvaname in $nvanames
+do
+router bgp 65002
+ no neighbor 192.168.1.68 remote-as 65515
+ neighbor 192.168.2.68 remote-as 65515
+ no neighbor 192.168.1.68 ebgp-multihop
+ neighbor 192.168.2.68 ebgp-multihop
+ address-family ipv4 unicast
+  no neighbor 192.168.1.68 soft-reconfiguration inbound
+  neighbor 192.168.2.68 soft-reconfiguration inbound
+ exit-address-family
+
+# Change neighbor 192.168.1.69 to 192.168.2.69
+ no neighbor 192.168.1.69 remote-as 65515
+ neighbor 192.168.2.69 remote-as 65515
+ no neighbor 192.168.1.69 ebgp-multihop
+ neighbor 192.168.2.69 ebgp-multihop
+ address-family ipv4 unicast
+  no neighbor 192.168.1.69 soft-reconfiguration inbound
+  neighbor 192.168.2.69 soft-reconfiguration inbound
+ exit-address-family
+
+end
+write memory
+EOF
+'
+done
+
+
+
+
+

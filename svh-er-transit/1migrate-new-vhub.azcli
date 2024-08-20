@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#Parameters
+region=eastus2
+rg=lab2-svh-avs # set your Resource Group
+vwanname=svh-avs # vWAN name
+hubname=hub2 # vHub name
+username=azureuser # Username
+password="Msft123Msft123" # Please change your password
+vmsize=Standard_DS1_v2 # VM Size
+
+echo Creating vWAN hub..
+az network vhub create -g $rg --name $hubname --address-prefix 192.168.2.0/24 --vwan $vwanname --location $region --sku Standard --no-wait
+
+echo Creating vHub ExpressRoute Gateway...
+az network express-route gateway create -g $rg -n $hubname-ergw --location $region --min-val 1 --virtual-hub $hubname --output none &>/dev/null &
+
+
