@@ -2,7 +2,7 @@
 
 #Parameters
 region=eastus2
-rg=lab2-svh-avs # set your Resource Group
+rg=lab-svh-avs # set your Resource Group
 vwanname=svh-avs # vWAN name
 hubname1=svhub
 hubname2=hub2
