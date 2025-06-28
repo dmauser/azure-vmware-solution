@@ -1,6 +1,6 @@
 #Parameters
-region=eastus
 rg=lab-svh-avs # set your Resource Group
+region=$(az group show -n $rg --query location -o tsv)
 vwanname=svh-avs # vWAN name
 hubname=svhub # vHub name
 username=azureuser # Username
@@ -25,22 +25,26 @@ echo Creating ExpressRoute Circuits
 az network express-route create --bandwidth 50 -n $ername1 --peering-location "$perloc1" -g $rg --provider $providerloc1 -l $region --sku-family MeteredData --sku-tier Standard -o none &>/dev/null &
 az network express-route create --bandwidth 50 -n $ername2 --peering-location "$perloc2" -g $rg --provider $providerloc2 -l $region --sku-family MeteredData --sku-tier Standard -o none &>/dev/null &
 
-# Validating Circuits Provider privisionaing status:
-echo Validating Circuits Provider privisionaing status...
+# Validating Circuits Provider provisioning status:
+echo Validating Circuits Provider provisioning status...
 # $ername1
-if  [ $(az network express-route show -g $rg --name $ername1 --query serviceProviderProvisioningState -o tsv) == 'Provisioned' ]; then
+if  [ "$(az network express-route show -g $rg --name $ername1 --query serviceProviderProvisioningState -o tsv)" = 'Provisioned' ]; then
  echo "$ername1=Provisioned"
 else
- echo $(az network express-route show -g $rg --name $ername1 --query serviceProviderProvisioningState -o tsv)
- echo "Please proceeed with the ER Circuit $ername1 provisioning with your Service Provider before proceed"
+ echo "$(az network express-route show -g $rg --name $ername1 --query serviceProviderProvisioningState -o tsv)"
+ echo "Please proceed with the ER Circuit $ername1 provisioning with your Service Provider before proceed"
 fi
-echo Validating Circuits Provider privisionaing status...
+echo Validating Circuits Provider provisioning status...
 # $ername2
-if  [ $(az network express-route show -g $rg --name $ername2 --query serviceProviderProvisioningState -o tsv) == 'Provisioned' ]; then
+if  [ "$(az network express-route show -g $rg --name $ername2 --query serviceProviderProvisioningState -o tsv)" = 'Provisioned' ]; then
  echo "$ername2=Provisioned"
 else
- echo $(az network express-route show -g $rg --name $ername2 --query serviceProviderProvisioningState -o tsv)
- echo "Please proceeed with the ER Circuit $ername2 provisioning with your Service Provider before proceed"
+    while [ "$(az network express-route show -g $rg --name $ername2 --query serviceProviderProvisioningState -o tsv)" != 'Provisioned' ]; do
+        echo "Current provisioning state for $ername2: $(az network express-route show -g $rg --name $ername2 --query serviceProviderProvisioningState -o tsv)"
+        echo "Waiting for ER Circuit $ername2 to be provisioned by your Service Provider..."
+        sleep 10
+    done
+    echo "$ername2=Provisioned"
 fi
 
 # Connect vuhb1 to ErCircuit1

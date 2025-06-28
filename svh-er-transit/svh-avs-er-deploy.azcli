@@ -1,15 +1,32 @@
 #!/bin/bash
 
 #Parameters
-region=eastus
+read -p "Enter the region (hit enter for default: eastus2): " region
+region=${region:-eastus2} # Prompt for region, default to eastus2 if not provided
 rg=lab-svh-avs # set your Resource Group
 vwanname=svh-avs # vWAN name
 hubname=svhub # vHub name
-username=azureuser # Username
-password="Msft123Msft123" # Please change your password
-vmsize=Standard_DS1_v2 # VM Size
 firewallsku=Premium #Azure Firewall SKU Standard or Premium
 fwpolicyname=$hubname-fwpolicy #Firewall Policy Name
+
+vmsize=Standard_DS1_v2 # VM Size
+# Prompt for username with default suggestion
+read -p "Enter username [azureuser]: " username
+username=${username:-azureuser}
+vmsize=Standard_DS1_v2
+
+# Prompt for password with confirmation
+while true; do
+    read -s -p "Enter password: " password
+    echo
+    read -s -p "Confirm password: " password_confirm
+    echo
+    if [ "$password" = "$password_confirm" ] && [ -n "$password" ]; then
+        break
+    else
+        echo "Passwords do not match or are empty. Please try again."
+    fi
+done
 
 # Adding script starting time and finish time
 start=`date +%s`
@@ -52,10 +69,10 @@ az network nsg rule create -g $rg --nsg-name default-nsg-$region -n 'default-all
 az network vnet subnet update --id $(az network vnet list -g $rg --query '[?contains(location,`'$region'`)].{id:subnets[0].id}' -o tsv) --network-security-group default-nsg-$region -o none
 
 echo Creating Spoke VMs...
-# Creating a VM in each connected spoke
-az vm create -n spoke1VM  -g $rg --image Ubuntu2204 --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name spoke1 --admin-username $username --admin-password $password --nsg "" --no-wait
-az vm create -n spoke2VM  -g $rg --image Ubuntu2204 --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name spoke2 --admin-username $username --admin-password $password --nsg "" --no-wait
-az vm create -n spoke3VM  -g $rg --image Ubuntu2204 --public-ip-sku Standard --size $vmsize -l $region --subnet main --vnet-name spoke3 --admin-username $username --admin-password $password --nsg "" --no-wait
+# Creating a VM in each connected spoke without public IP
+az vm create -n spoke1VM  -g $rg --image Ubuntu2204 --size $vmsize -l $region --subnet main --vnet-name spoke1 --admin-username $username --admin-password $password --nsg "" --public-ip-address "" --no-wait
+az vm create -n spoke2VM  -g $rg --image Ubuntu2204 --size $vmsize -l $region --subnet main --vnet-name spoke2 --admin-username $username --admin-password $password --nsg "" --public-ip-address "" --no-wait
+az vm create -n spoke3VM  -g $rg --image Ubuntu2204 --size $vmsize -l $region --subnet main --vnet-name spoke3 --admin-username $username --admin-password $password --nsg "" --public-ip-address "" --no-wait
 
 echo Checking vHub provisioning status...
 # Checking vHub provisioning and routing state 

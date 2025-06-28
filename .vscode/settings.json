@@ -5,5 +5,19 @@
             "scheme": "file",
             "pattern": "svh-er-transit/svh-avs-er-deploy.azcli"
         }
-    ]
+    ],
+    "spellright.language": [
+        "en"
+    ],
+    "spellright.documentTypes": [
+        "markdown",
+        "latex",
+        "plaintext",
+        "azcli"
+    ],
+    "spellright.parserByClass": {
+        "azcli": {
+            "parser": "plain"
+        }
+    }
 }
